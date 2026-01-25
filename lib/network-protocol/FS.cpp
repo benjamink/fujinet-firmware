@@ -43,7 +43,7 @@ netProtoErr_t NetworkProtocolFS::open(PeoplesUrlParser *url, cmdFrame_t *cmdFram
     if (mount(url) == true)
         return NETPROTO_ERR_UNSPECIFIED;
 
-    if (cmdFrame->aux1 == 6 || cmdFrame->aux1 == 7)
+    if (cmdFrame->aux1 == NETPROTO_OPEN_DIRECTORY || cmdFrame->aux1 == NETPROTO_OPEN_DIRECTORY_ALT)
     {
         return open_dir();
     }
@@ -57,7 +57,7 @@ netProtoErr_t NetworkProtocolFS::open_file()
 {
     update_dir_filename(opened_url);
 
-    if (aux1_open == 4 || aux1_open == 8)
+    if (aux1_open == NETPROTO_OPEN_READ || aux1_open == NETPROTO_OPEN_WRITE)
         resolve();
     else
         stat();
@@ -495,4 +495,28 @@ netProtoErr_t NetworkProtocolFS::lock(PeoplesUrlParser *url, cmdFrame_t *cmdFram
 netProtoErr_t NetworkProtocolFS::unlock(PeoplesUrlParser *url, cmdFrame_t *cmdFrame)
 {
     return NETPROTO_ERR_NONE;
+}
+
+size_t NetworkProtocolFS::available()
+{
+    size_t avail;
+
+
+    switch (openMode)
+    {
+    case FILE:
+        if (aux1_open == 8)
+            return 0;
+        avail = std::min<size_t>(fileSize + receiveBuffer->length(), WAITING_CAP);
+        break;
+    case DIR:
+        avail = receiveBuffer->length();
+        if (!avail)
+            avail = dirBuffer.length();
+        break;
+    default:
+        avail = 0;
+    }
+
+    return avail;
 }

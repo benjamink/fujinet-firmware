@@ -442,7 +442,7 @@ netProtoErr_t NetworkProtocolHTTP::status_file(NetworkStatus *status)
     {
     case DATA:
     {
-        if (!fromInterrupt && resultCode == 0 && aux1_open != OPEN_MODE_HTTP_PUT_H)
+        if (!fromInterrupt && resultCode == 0)
         {
 #ifdef VERBOSE_PROTOCOL
             Debug_printf("calling http_transaction\r\n");
@@ -821,4 +821,33 @@ netProtoErr_t NetworkProtocolHTTP::mkdir(PeoplesUrlParser *url, cmdFrame_t *cmdF
 netProtoErr_t NetworkProtocolHTTP::rmdir(PeoplesUrlParser *url, cmdFrame_t *cmdFrame)
 {
     return del(url, cmdFrame);
+}
+
+size_t NetworkProtocolHTTP::available()
+{
+    size_t avail = 0;
+
+    if (client == nullptr)
+        return 0;
+
+    switch (httpChannelMode)
+    {
+    case DATA:
+        avail = client->available();
+        break;
+    case SET_HEADERS:
+    case COLLECT_HEADERS:
+    case SEND_POST_DATA:
+        break;
+    case GET_HEADERS:
+        if (resultCode == 0)
+            http_transaction();
+        if (returned_header_cursor < collect_headers.size())
+            avail = returned_headers[returned_header_cursor].size();
+    default:
+        Debug_printf("ERROR: Unknown httpChannelMode: %d\r\n", httpChannelMode);
+        break;
+    }
+
+    return avail;
 }

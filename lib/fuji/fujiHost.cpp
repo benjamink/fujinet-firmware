@@ -243,7 +243,7 @@ fnFile * fujiHost::fnfile_open(const char *path, char *fullpath, int fullpathlen
         if(strlcpy(fullpath, realpath, fullpathlen) != strlen(realpath))
             return nullptr;
     }
-    Debug_printf("fujiHost #%d opening file path \"%s\"\n", slotid, fullpath);
+    Debug_printf("fujiHost #%d:%s opening file path \"%s\"\n", slotid, _hostname, fullpath);
 
     return _fs->fnfile_open(fullpath, mode);
 }
@@ -532,7 +532,7 @@ bool fujiHost::mount()
 
 /* Returns true if successful
 */
-bool fujiHost::umount()
+bool fujiHost::unmount_success()
 {
     Debug_printf("::unmount {%d} \"%s\"\n", slotid+1, _hostname);
 
