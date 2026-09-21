@@ -111,7 +111,14 @@ void iwmCPM::iwm_open(const iwm_decoded_cmd_t &cmd)
     }
 #endif
 
-    SYSTEM_BUS.transaction_error(err_result);
+    // transaction_error() asserts on NOERROR - success must go through transaction_success()
+    if (err_result == SP_ERR::NOERROR)
+    {
+        SYSTEM_BUS.transaction_accept(TRANS_STATE::NO_GET);
+        SYSTEM_BUS.transaction_success();
+    }
+    else
+        SYSTEM_BUS.transaction_error(err_result);
 }
 
 void iwmCPM::iwm_close(const iwm_decoded_cmd_t &cmd)
@@ -173,6 +180,7 @@ void iwmCPM::iwm_read(const iwm_decoded_cmd_t &cmd)
     {
         size_t numbytes = std::min<uint16_t>(mw, cmd.frame.char_rw.length);
 
+        buffer.resize(numbytes); // operator[] below needs the elements to exist
         for (size_t i = 0; i < numbytes; i++)
         {
             uint8_t b;
@@ -240,7 +248,14 @@ void iwmCPM::iwm_ctrl(const iwm_decoded_cmd_t &cmd)
     else
         err_result = SP_ERR::IOERROR;
 
-    SYSTEM_BUS.transaction_error(err_result);
+    // transaction_error() asserts on NOERROR - success must go through transaction_success()
+    if (err_result == SP_ERR::NOERROR)
+    {
+        SYSTEM_BUS.transaction_accept(TRANS_STATE::NO_GET);
+        SYSTEM_BUS.transaction_success();
+    }
+    else
+        SYSTEM_BUS.transaction_error(err_result);
 }
 
 #endif /* BUILD_APPLE */
